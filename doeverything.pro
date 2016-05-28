@@ -20,7 +20,7 @@ pro doEverything, field, $
      if NOT keyword_set(BOTHPA) then bothPA = 0 else bothPA = 1
   endif
   
-  data_dir   = '~/Desktop/MasterCats_V1'
+  data_dir   = '../MasterCats_V1'
   cat_suffix = '_allAvailableData.fits' ;'_MASTER_z_GiG_Kpz.fits'
 
   case field of
