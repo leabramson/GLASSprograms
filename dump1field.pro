@@ -11,7 +11,7 @@ function dump1field, idlist, fieldname
   ;; Set-up file structure stuff
 ;  prefix =
 ;  '/Volumes/LAbramiDrive/GLASS_VIS_INSPECT/'+fieldName+'/IndividualObjects/'
-  prefix = '$DATA_DIR/GLASS_official_products/'+fieldName+'/IndividualObjects/'
+  prefix = '/home/labramson/LocalData/Abramson/GLASS_official_products/'+fieldName+'/IndividualObjects/'
   prelen = strlen(prefix)
   spawn, 'ls '+prefix+'*-???-150515_0????-G102.2D.fits > tmp.list'
   readcol, 'tmp.list', tfiles, f = 'A', /silent
@@ -60,19 +60,20 @@ function dump1field, idlist, fieldname
      fields[ii]    = field[ii]
   endfor
 
-  savedata = {PA1B: reform(PA1_filelist[0,*]), $
-              PA2B: reform(PA2_filelist[0,*]), $
-              PA1R: reform(PA1_filelist[1,*]), $
-              PA2R: reform(PA2_filelist[1,*]), $
-              Z   : redshifts, $
-              ZQ  : qflags, $
-              MAG : mags, $
-              RA  : ras, $
-              DEC : decs, $
-              FIELD: field, $
-              ID  : id, $
-              PA1 : pas[0], $
-              PA2 : pas[1]}
+  savedata = {PA1B  : reform(PA1_filelist[0,*]), $
+              PA2B  : reform(PA2_filelist[0,*]), $
+              PA1R  : reform(PA1_filelist[1,*]), $
+              PA2R  : reform(PA2_filelist[1,*]), $
+              Z     : redshifts, $
+              ZQ    : qflags, $
+              Z_PHOT: pzs, $
+              MAG   : mags, $
+              RA    : ras, $
+              DEC   : decs, $
+              FIELD : field, $
+              ID    : id, $
+              PA1   : pas[0], $
+              PA2   : pas[1]}
   
   RETURN, savedata
   

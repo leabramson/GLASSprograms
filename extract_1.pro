@@ -1,15 +1,18 @@
 function extract_1, infile, z, $
-                    PA = pa, $
-;                    MASK = mask, $
-                    REFIT = refit
+                    Z_PHOT  = z_phot, $
+                    PA      = pa, $
+                    DOMASK  = domask, $
+                    REFIT   = refit, $
+                    INSPECT = inspect
 
   if N_ELEMENTS(z) eq 0 then z = -99
+  if NOT keyword_set(Z_PHOT) then z_phot = -99
   if NOT keyword_SET(PA) then pa = -99
-  if NOT keyword_set(MASK) then mask = 0 else mask = 1 ;; mask rather than subtract contamination
+  if NOT keyword_set(DOMASK) then domask = 0 else domask = 1 ;; mask rather than subtract contamination
   if NOT keyword_set(REFIT) then refit = 0 else refit = 1  ;; refit continuum centerline
+  if NOT keyword_set(INSPECT) then inspect = 0 else inspect = 1
   
-  ;; Read crap
-  
+  ;; READ CRAP
   null   = mrdfits(infile, 0, thead, /silent)
   spec   = mrdfits(infile, 'sci', head, /silent)
   contam = mrdfits(infile, 'contam', /silent)
@@ -18,13 +21,14 @@ function extract_1, infile, z, $
   err    = mrdfits(infile, 'wht', /silent)
   di     = mrdfits(infile, 'dsci', /silent)
   
-  ;; Basic Info
+  ;; BASIC INFO
   exptime = sxpar(thead, 'EXPTIME')   ;; SECONDS
   mag     = sxpar(thead, 'MAG')       ;; Probably F140W?
 
   ;; TO POISSON UNITS
   spec   *= exptime
   contam *= exptime
+  err[where(err eq 0)] = median(err) ;; to avoid NaNs..
   var     = (err * exptime)^2
   
   ;; GET SPATIAL PROFILE/LSF
@@ -44,18 +48,17 @@ function extract_1, infile, z, $
   height = n_elements(tx)
 
   ;; MAKE A MASK IMAGE
-  if mask then begin
-     mask = contam
-     mask[where(contam ge 2 * sqrt(var), compl = good)] = 1
-     mask[good] = 0
-  endif
+  mask = contam
+  mask[where(contam ge 2 * sqrt(var), compl = good)] = 1
+  mask[good] = 0                         ;; Make the mask
+  mask = smooth(mask, 10, /edge_wrap)    ;; Grow the mask
+  mask[where(mask ge 1d-4, compl = good)] = 1
+  mask[good] = 0
+
+;  stop
   
   ;; MAKE A SCIENCE IMAGE
-  if NOT mask then $
-     sci   = (spec - contam) $
-  else $
-     sci = spec[where(~mask)]
-
+  sci   = (spec - contam)
 
   if NOT refit then begin
      ctroid = fltarr(2,run)
@@ -113,15 +116,17 @@ function extract_1, infile, z, $
   nOuts = intarr(run)
   
   ;;  DO THE EXTRACTIONS
+  opti = []
+  opti_Var = []
   for jj = 0, run - 1 do begin
      ;; Do the optimal extraction
+     opti     = [opti, total(modim[jj,*]*sci[jj,*]/var[jj,*]) $
+                 / total(modim[jj,*]^2/var[jj,*])]
+     opti_var = [opti_var, 1. / total(modim[jj,*]/var[jj,*])]
      goods    = where(~mask[jj,*])
-     opti     = total(modim[jj,*]*sci[jj,*]/var[jj,*]) $
-                / total(modim[jj,*]^2/var[jj,*])
-     opti_var = 1. / total(modim[jj,*]/var[jj,*])
-;     optiMask = total(modim[jj,goods]*spec[jj,goods]/var[jj,goods]) $
-;                / total(modim[jj,goods]^2/var[jj,goods])
-;     optiMask_Var = 1. / total(modim[jj,goods]/var[jj,goods])
+     optiMask = total(modim[jj,goods]*spec[jj,goods]/var[jj,goods]) $
+                / total(modim[jj,goods]^2/var[jj,goods])
+     optiMask_Var = 1. / total(modim[jj,goods]/var[jj,goods])
 
      ;; Do the binned extractions
      all = where(tx ge outerdn[jj] AND tx le outerup[jj], nall)
@@ -156,10 +161,29 @@ function extract_1, infile, z, $
      extrIm[jj,in ] = 30
      
   endfor       
-
+ 
+  inspect = 1
+  if inspect then begin
+     window, 0, xsize = 800, ysize = 1200
+     !P.MULTI = [0,1,3]
+     plot, lambda, findgen(60), /nodat
+     cgimage, spec, stretch = 2, /over
+     plot, lambda, findgen(60), /nodat
+     cgimage, contam, stretch = 2, /over
+     plot, lambda, findgen(60), /nodat
+     cgimage, sci, stretch = 2, /over
+     print, ''
+     print, 'ID:', sxpar(thead, 'POINTING'), '', sxpar(thead, 'ID')
+     print, 'Continue?'
+     k = get_kbrd(1)
+     print, ''
+  endif
+  !P.MULTI = 0
+  
   ;;  WRITE OUTPUT
   savedata = {LAMBDA:      lambda, $
               Z:           z, $
+              Z_PHOT:      z_phot, $
               RA:          sxpar(thead, 'RA'), $
               DEC:         sxpar(thead, 'DEC'), $
               MAG:         mag, $
@@ -192,8 +216,8 @@ function extract_1, infile, z, $
               INTERDN: interdn, $
               OUTERUP: outerup, $
               OUTERDN: outerdn, $
-              PA: pa, $
-              MASK: mask}
+              PA: pa};, $
+;              MASK: mask}
 ;  mwrfits, savedata, pa+'_extractions/'+string(ii, f = '(I04)')+'_radStuff.fits', /create
   
   RETURN, savedata

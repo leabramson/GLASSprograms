@@ -74,35 +74,85 @@ pro doEverything, field, $
 
   cat = data_dir+'/'+field+cat_suffix
 
-  if NOT keyword_set(OUTPRIFIX) then begin
-     zzmin = string(zmin  , f = '(F3.1)')
-     zzmax = string(zmax  , f = '(F3.1)')
-     lomag = string(minmag, f = '(F4.1)')
-     himag = string(maxmag, f = '(F4.1)')
-
-     if docontam then begin
-        cclevel = 'c'+string(clevel, f = '(F3.1)')
-        bbpa    = 'pacut'+string(bothPa, f = '(I1)')
-     endif else begin
-        cclevel = 'c99.9'
-        bbpa    = 'pacut0'
-     endelse
-
-     outprefix = field+'_'+zzmin+'_'+zzmax+'_'$
-                 +lomag+'_'+himag+'_'$
-                 +cclevel+'_'+bbpa
-     
-  endif
+  zzmin = string(zmin  , f = '(F3.1)')
+  zzmax = string(zmax  , f = '(F3.1)')
+  lomag = string(minmag, f = '(F4.1)')
+  himag = string(maxmag, f = '(F4.1)')
   
+  if docontam then begin
+     cclevel = 'c'+string(clevel, f = '(F3.1)')
+     bbpa    = 'pacut'+string(bothPa, f = '(I1)')
+  endif else begin
+     cclevel = 'c99.9'
+     bbpa    = 'pacut0'
+  endelse
+  
+  outsuffix = '/sourceLists/'+field+'_'+zzmin+'_'+zzmax+'_'$
+              +lomag+'_'+himag+'_'$
+              +cclevel+'_'+bbpa
+
+  if NOT keyword_set(OUTPREFIX) then outprefix = '.'
+
   cutOnZ, cat, zmin = zmin, zmax = zmax, $
           /photoz, $
           docontam = docontam, clevel = clevel, bothPa = bothpa, $
           output = 'tmpZ.list'
   cutOnMag, 'tmpZ.list', minMag = minmag, maxMag = maxmag, $
-            output = outprefix+'_FILELIST.list'
+            output = outprefix+'/'+outsuffix+'_FILELIST.list'
   
-  toGet = dump1field(outprefix+'_FILELIST.list', field)
+  toGet = dump1field(outprefix+'/'+outsuffix+'_FILELIST.list', field)
+  ntoget = n_elements(toGet.Z)
 
-  stop
+  if ntoget ge 1 then begin
+     for ii = 0, ntoget - 1 do begin
+        
+        check = file_info(toget.PA1B[ii])
+        if check.exists then begin
+           toWrite1b = extract_1(toget.PA1B[ii], toGet.Z[ii], $
+                                 Z_PHOT = toget.Z_PHOT[ii], PA = toget.PA1)   ;, /refit)
+           toWrite2b = extract_1(toget.PA2B[ii], toGet.Z[ii], $
+                                 Z_PHOT = toget.Z_PHOT[ii], PA = toget.PA2)   ;, /refit)
+           toWrite1r = extract_1(toget.PA1R[ii], toGet.Z[ii], $
+                                 Z_PHOT = toget.Z_PHOT[ii], PA = toget.PA1)   ;, /refit)
+           toWrite2r = extract_1(toget.PA2R[ii], toGet.Z[ii], $
+                                 Z_PHOT = toget.Z_PHOT[ii], PA = toget.PA2) ;, /refit)
+           
+           mwrfits, toWrite1b, outprefix+'/'+strcompress(string(toGet.ID[ii], f = '(I05)')+'_1_B.fits', /rem), /create
+           mwrfits, toWrite2b, outprefix+'/'+strcompress(string(toGet.ID[ii], f = '(I05)')+'_2_B.fits', /rem), /create
+           mwrfits, toWrite1r, outprefix+'/'+strcompress(string(toGet.ID[ii], f = '(I05)')+'_1_R.fits', /rem), /create
+           mwrfits, toWrite2r, outprefix+'/'+strcompress(string(toGet.ID[ii], f = '(I05)')+'_2_R.fits', /rem), /create
+        endif
+        
+     endfor
+  endif
+  
+end
+
+pro doclean
+
+  spawn, 'ls ~/Projects/GLASS/MasterCats_V1/*allAvail*.fits > catalogs.list'
+  readcol, 'catalogs.list', cats, f = 'A'
+  ncats = n_elements(cats)
+
+  cat2 = strarr(ncats)
+  for ii = 0, ncats - 1 do $
+     cat2[ii] = strmid(cats[ii], strpos(cats[ii], 'allAvailableData')-9, 8)
+  
+  print, ''
+  print, 'Extracing spectra for '+string(ncats, f = '(I02)')+' GLASS fields'
+  for ii = 0, ncats - 1 do $
+     print, ' >>> '+cat2[ii]
+  print, ''
+
+  wait, 1
+
+  for ii = 0, ncats - 1 do $
+  doeverything, cat2[ii], $
+                zmin = 1.0, zmax = 1.8, $
+                minmag = 14, maxmag = 21.8, $
+;                /docontam, /bothpa, clevel = 2.0, $
+                outprefix = '~/Projects/GLASS/spectralAnalysis'
+  
+  print, 'done!'
   
 end

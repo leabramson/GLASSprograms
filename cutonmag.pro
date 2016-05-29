@@ -22,7 +22,7 @@ pro cutOnMag, incat, output = output, $
              decs[use[ii]], $
              zs[use[ii]], $
              zqs[use[ii]], $
-             pzs[use[ii]]
+             pzs[use[ii]], $
              mags[use[ii]]
   close, 1
 

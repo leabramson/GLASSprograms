@@ -55,7 +55,8 @@ pro doMost
   
 end
 
-pro do1149, outdir = outdir
+pro do1149, outdir = outdir, $
+            pointing = pointing
 
   field = 'MACS1149'
   catDir = '$DATA_DIR/GLASS_official_products/'+field+'/Catalogs'
@@ -65,9 +66,9 @@ pro do1149, outdir = outdir
   gigCat    = outdir+'/'+field+'_glass_GiG_results.fits'
   photozOut = outdir+'/'+field+'_Kuang_photozs.fits' 
   
-  readglasslist, catDir+'/*glassmaster.cat'    , master
-;  readredshift , catDir+'/*redshiftcatalog.txt', redshifts
-  readgig      , catDir+'/*glassgigcatalog.txt', gigCat
+  readglasslist   , catDir+'/*glassmaster.cat'    , master
+  read1149redshift, redshifts  ;;  1149 is a special case
+  readgig         , catDir+'/*glassgigcatalog.txt', gigCat
 
   photozs   = catDir+'/*_photoz.fits'
   translatekuang, photozs, photozOut
@@ -77,5 +78,20 @@ pro do1149, outdir = outdir
   print, ''
   join2cats, master, gigCat, 'tmp1.fits', $
              striptag = 'GLASS_ID'
+    print, ''
+  print, 'APPENDING REDSHIFTS TO GLASS SOURCE + GiG CATALOG ... '
+  print, ''
+  join2cats, 'tmp1.fits', redshifts, 'tmp2.fits', $
+             striptag = ['RA', 'DEC'], dposname = 'Z2GLASS_DOPS'
+  print, ''
+  print, 'APPENDING KUANG PHOTO-ZS TO GLASS SOURCE + GiG + GiGz CATALOG ... '
+  print, ''
+  join2cats, 'tmp2.fits', photozOut, outdir+'/'+field+'_allAvailableData.fits', $
+             striptag = ['RA', 'DEC'], $
+             dposname = 'KUANG2GLASS_DPOS', $
+             POINTING = pointing
+  print, ''
+  print, ' >>> ALL DONE! <<< '
   
 end
+;do1149, outdir = '~/Projects/GLASS/MasterCats_V1', pointing = 'MACS1149_CTR'

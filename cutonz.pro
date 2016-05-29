@@ -6,21 +6,27 @@ function doContam, infits, $
                    CLEVEL = clevel
   
   if NOT bothPA then $
-     keep = where((infits.CONTAM_G102_PA1 le clevel $
-                   AND infits.CONTAM_G141_PA1 le clevel) $
+     keep = where((    infits.CONTAM_G102_PA1 le clevel    $
+                   AND infits.CONTAM_G141_PA1 le clevel    $
+                   AND infits.DEFECT_G102_PA1 eq 0         $
+                   AND infits.DEFECT_G141_PA1 eq 0)        $
                   OR $
-                  (infits.CONTAM_G102_PA2 le clevel $
-                   AND infits.CONTAM_G141_PA2 le clevel), nuse) $ ;; Take is as long as 1 good PA
+                  (    infits.CONTAM_G102_PA2 le clevel    $
+                   AND infits.CONTAM_G141_PA2 le clevel    $
+                   AND infits.DEFECT_G102_PA2 eq 0         $
+                   AND infits.DEFECT_G141_PA2 eq 0), nuse) $ ;; Take is as long as 1 good PA
   else $
-     keep = where((infits.CONTAM_G102_PA1 le clevel $
-                   AND infits.CONTAM_G141_PA1 le clevel) $
+     keep = where((    infits.CONTAM_G102_PA1 le clevel    $
+                   AND infits.CONTAM_G141_PA1 le clevel    $
+                   AND infits.DEFECT_G102_PA1 eq 0         $
+                   AND infits.DEFECT_G141_PA1 eq 0)        $
                   AND $
-                  (infits.CONTAM_G102_PA2 le clevel $
-                   AND infits.CONTAM_G141_PA2 le clevel), nuse) ;; Take it only if 2 good PAs
+                  (    infits.CONTAM_G102_PA2 le clevel    $
+                   AND infits.CONTAM_G141_PA2 le clevel    $
+                   AND infits.DEFECT_G102_PA2 eq 0         $
+                   AND infits.DEFECT_G141_PA2 eq 0), nuse) ;; Take it only if 2 good PAs
   
-  outfits = infits[keep]
-  
-  RETURN, outfits
+  RETURN, infits[keep]
 end
 
 ;;
@@ -58,17 +64,19 @@ pro cutOnZ, infits, $
   mags   = []
   
   d = mrdfits(infits, 1, /silent)
-  
-  if NOT photoz then $
-     use = where(d.Z_GLASS ge zmin AND d.Z_GLASS lt zmax, nuse) $
-  else $
-     use = where((d.Z_GLASS ge zmin OR d.KUANG_PZ_A ge zmin) $
-                 AND (d.Z_GLASS lt zmax OR d.KUANG_PZ_A lt zmax), nuse)
-  
-  if NOT docontam then $    
-     d2 = d[use] $
-  else $
-     d2 = docontam(d[use], BOTHPA = bothPA, CLEVEL = clevel)
+  use = where(d.Z_GLASS ge zmin AND d.Z_GLASS lt zmax, nuse)
+
+  if photoz then $
+     pzadd = where(d.KUANG_PZ_A ge zmin AND d.KUANG_PZ_A lt zmax, nadd)
+
+  use = [use,pzadd]
+  tu  = use[sort(use)]
+  use = tu[UNIQ(tu)]
+
+  d2 = d[use]
+
+  if docontam then $
+     d2 = docontam(d2, BOTHPA = bothPA, CLEVEL = clevel)
   
   fields = [fields, d2.POINTING]
   ids    = [ids,    d2.NUMBER]
