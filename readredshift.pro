@@ -9,7 +9,7 @@ pro readRedshift, catIn, fitsOut
            f = 'A,D,D,F,F,F'
   ngals = n_elements(glassID)
 
-  savedata = {GLASS_ID               : 0L, $
+  savedata = {GLASS_ID         : 0L, $
               RA               : 0.d, $
               DEC              : 0.d, $
               Z_GLASS          : 0., $

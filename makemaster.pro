@@ -1,3 +1,6 @@
+;; Make a "master" GLASS catalog -- WON'T WORK ON MACS1149.
+;; For that, use "make1149.pro" contained below.
+
 pro makemaster, FIELD = field, $
                 POINTING = pointing, $
                 OUTDIR = outdir
@@ -42,10 +45,10 @@ end
 pro doMost
 
   makemaster, field = 'ABEL2744', pointing = 'ABEL2744_CTR', outdir = '~/Desktop/MasterCats_V1'
-;  makemaster, field = 'MACS0416', pointing = 'MACS0416_CTR', outdir = '~/Desktop/MasterCats_V1'
+;  makemaster, field = 'MACS0416', pointing = 'MACS0416_CTR', outdir =
+;  '~/Desktop/MasterCats_V1' ;; MISSING GIG RESULTS
   makemaster, field = 'MACS0717', pointing = 'MACS0717_CTR', outdir = '~/Desktop/MasterCats_V1'
   makemaster, field = 'MACS0744', pointing = 'MACS0744_CTR', outdir = '~/Desktop/MasterCats_V1'
-;  makemaster, field = 'MACS1149', pointing = 'MACS1149_CTR', outdir = '~/Desktop/MasterCats_V1'
   makemaster, field = 'MACS1423', pointing = 'MACS1423_CTR', outdir = '~/Desktop/MasterCats_V1'
   makemaster, field = 'MACS2129', pointing = 'MACS2129_CTR', outdir = '~/Desktop/MasterCats_V1'
   makemaster, field = 'RXJC1347', pointing = 'RXJC1347_CTR', outdir = '~/Desktop/MasterCats_V1'
