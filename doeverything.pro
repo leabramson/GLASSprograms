@@ -146,7 +146,7 @@ pro doclean
 
   wait, 1
 
-  for ii = 0, ncats - 1 do $
+  for ii = 4, ncats - 1 do $
   doeverything, cat2[ii], $
                 zmin = 1.0, zmax = 1.8, $
                 minmag = 14, maxmag = 21.8, $

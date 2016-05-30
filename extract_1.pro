@@ -28,7 +28,7 @@ function extract_1, infile, z, $
   ;; TO POISSON UNITS
   spec   *= exptime
   contam *= exptime
-  err[where(err eq 0)] = median(err) ;; to avoid NaNs..
+  err[where(err le 0)] = median(err) ;; to avoid NaNs..
   var     = (err * exptime)^2
   
   ;; GET SPATIAL PROFILE/LSF
@@ -51,15 +51,14 @@ function extract_1, infile, z, $
   mask = contam
   mask[where(contam ge 2 * sqrt(var), compl = good)] = 1
   mask[good] = 0                         ;; Make the mask
-  mask = smooth(mask, 10, /edge_wrap)    ;; Grow the mask
+  mask = smooth(mask, [15,5], /edge_wrap, /nan)    ;; Grow the mask
   mask[where(mask ge 1d-4, compl = good)] = 1
   mask[good] = 0
-
-;  stop
   
   ;; MAKE A SCIENCE IMAGE
   sci   = (spec - contam)
 
+  ;; FIND A NEW CTRLINE IF YOU MUST
   if NOT refit then begin
      ctroid = fltarr(2,run)
      ctroid[0,*] = trace
@@ -83,6 +82,7 @@ function extract_1, infile, z, $
      trace = cline[0] + lambda * cline[1]
   endelse
 
+  ;; MAKE A MODEL IMAGE FOR OPTIMAL EXTRACTION
   modIm = sci  ;; Will contain the profile for optimal extraction
   for jj = 0, n_elements(trace) - 1 do begin
      u = (tx - trace[jj]) / params[2]
@@ -118,15 +118,17 @@ function extract_1, infile, z, $
   ;;  DO THE EXTRACTIONS
   opti = []
   opti_Var = []
+  optiMask = []
+  optiMask_Var = []
   for jj = 0, run - 1 do begin
      ;; Do the optimal extraction
      opti     = [opti, total(modim[jj,*]*sci[jj,*]/var[jj,*]) $
                  / total(modim[jj,*]^2/var[jj,*])]
-     opti_var = [opti_var, 1. / total(modim[jj,*]/var[jj,*])]
-     goods    = where(~mask[jj,*])
-     optiMask = total(modim[jj,goods]*spec[jj,goods]/var[jj,goods]) $
-                / total(modim[jj,goods]^2/var[jj,goods])
-     optiMask_Var = 1. / total(modim[jj,goods]/var[jj,goods])
+     opti_var = [opti_var, 1. / total(modim[jj,*]^2/var[jj,*])]
+     goods    = where(~mask[jj,*], ng)
+     optiMask = [optiMask, total(modim[jj,goods]*spec[jj,goods]/var[jj,goods]) $
+                 / total(modim[jj,goods]^2/var[jj,goods])]
+     optiMask_Var = [optiMask_Var, 1. / total(modim[jj,goods]^2/var[jj,goods])]
 
      ;; Do the binned extractions
      all = where(tx ge outerdn[jj] AND tx le outerup[jj], nall)
@@ -141,15 +143,15 @@ function extract_1, infile, z, $
      sky = mean([sci[jj,0:10], sci[jj,-11:*]])
 
      skies[jj]  = sky
-     integ[jj]  = total(sci[jj,all]) / nall
-     outer[jj]  = total(sci[jj,out]) / nout
-     inter[jj]  = total(sci[jj,int]) / nint
-     inner[jj]  = total(sci[jj,in ]) / nin 
+     integ[jj]  = total(sci[jj,all]); / nall
+     outer[jj]  = total(sci[jj,out]); / nout
+     inter[jj]  = total(sci[jj,int]); / nint
+     inner[jj]  = total(sci[jj,in ]); / nin 
      
-     ivar[jj]   = total(var[jj,all]) / nall
-     ovar[jj]   = total(var[jj,out]) / nout
-     intvar[jj] = total(var[jj,int]) / nint
-     innvar[jj] = total(var[jj,in ]) / nin 
+     ivar[jj]   = total(var[jj,all]); / nall
+     ovar[jj]   = total(var[jj,out]); / nout
+     intvar[jj] = total(var[jj,int]); / nint
+     innvar[jj] = total(var[jj,in ]); / nin 
 
      nAlls[jj] = nall
      nInns[jj] = nin
