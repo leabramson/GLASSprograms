@@ -99,21 +99,31 @@ function extract_1, infile, z, $
   outerup = interup + 0.75 * re
   outerdn = interdn - 0.75 * re
 
+  ;; Get an optimally wide "outer aperture"
+  optiWide = getoptizone(sci, var, $
+                         clineUp = innerup, $
+                         clineDn = innerDn)
+  optiWideUp = innerUp + optiWide
+  optiWideDn = innerDn - optiWide
+  
   skies  = dblarr(run)
   integ  = dblarr(run)
   outer  = dblarr(run)
   inter  = dblarr(run)
   inner  = dblarr(run)
+  optiOut = dblarr(run)
   
   ivar   = dblarr(run)
   ovar   = dblarr(run)
   intvar = dblarr(run)
   innvar = dblarr(run)
-
+  optiOutVar = dblarr(run)
+  
   nAlls = intarr(run)
   nInns = intarr(run)
   nInts = intarr(run)
   nOuts = intarr(run)
+  nOpti = intarr(run)
   
   ;;  DO THE EXTRACTIONS
   opti = []
@@ -121,6 +131,7 @@ function extract_1, infile, z, $
   optiMask = []
   optiMask_Var = []
   for jj = 0, run - 1 do begin
+
      ;; Do the optimal extraction
      opti     = [opti, total(modim[jj,*]*sci[jj,*]/var[jj,*]) $
                  / total(modim[jj,*]^2/var[jj,*])]
@@ -131,14 +142,18 @@ function extract_1, infile, z, $
      optiMask_Var = [optiMask_Var, 1. / total(modim[jj,goods]^2/var[jj,goods])]
 
      ;; Do the binned extractions
-     all = where(tx ge outerdn[jj] AND tx le outerup[jj], nall)
-     out = where((tx ge interup[jj] AND tx lt outerup[jj]) $
+     all = where( tx ge outerdn[jj] AND tx le outerup[jj], nall)
+     out = where((tx gt interup[jj] AND tx le outerup[jj]) $
                  OR $
-                 (tx gt outerdn[jj] AND tx le interdn[jj]), nout)
-     int = where((tx ge innerup[jj] AND tx lt interup[jj]) $
+                 (tx ge outerdn[jj] AND tx lt interdn[jj]), nout)
+     int = where((tx gt innerup[jj] AND tx le interup[jj]) $
                  OR $
                  (tx ge interdn[jj] AND tx lt innerdn[jj]), nint)
-     in  = where(tx gt innerdn[jj] AND tx lt innerup[jj], nin)
+     in  = where(tx ge innerdn[jj] AND tx le innerup[jj], nin)
+
+     optiOuter = where((tx gt innerUp[jj] AND tx le optiWideUp[jj]) $
+                       OR $
+                       (tx ge optiWideDn[jj] AND tx lt innerDn[jj]), no)
      
      sky = mean([sci[jj,0:10], sci[jj,-11:*]])
 
@@ -147,79 +162,91 @@ function extract_1, infile, z, $
      outer[jj]  = total(sci[jj,out]) / nout
      inter[jj]  = total(sci[jj,int]) / nint
      inner[jj]  = total(sci[jj,in ]) / nin 
+     optiOut[jj] = total(sci[jj,optiOuter]) / no
      
      ivar[jj]   = total(var[jj,all]) / nall^2
      ovar[jj]   = total(var[jj,out]) / nout^2
      intvar[jj] = total(var[jj,int]) / nint^2
      innvar[jj] = total(var[jj,in ]) / nin^2
-
+     optiOutVar[jj] = total(var[jj,optiOuter]) / no^2
+     
      nAlls[jj] = nall
      nInns[jj] = nin
      nInts[jj] = nint
      nOuts[jj] = nout
-     
+     nOpti[jj] = no
+
+     extrIm[jj,optiOuter] = 5
      extrIm[jj,out] = 10
      extrIm[jj,int] = 20
      extrIm[jj,in ] = 30
      
   endfor       
- 
-  inspect = 1
+
+;  inspect = 1
   if inspect then begin
      window, 0, xsize = 800, ysize = 1200
      !P.MULTI = [0,1,3]
-     plot, lambda, findgen(60), /nodat
+     plot, lambda, findgen(60), /nodat, /xsty
      cgimage, spec, stretch = 2, /over
-     plot, lambda, findgen(60), /nodat
+     plot, lambda, findgen(60), /nodat, /xsty
      cgimage, contam, stretch = 2, /over
-     plot, lambda, findgen(60), /nodat
+     plot, lambda, findgen(60), /nodat, /xsty
      cgimage, sci, stretch = 2, /over
      print, ''
      print, 'ID:', sxpar(thead, 'POINTING'), '', sxpar(thead, 'ID')
      print, 'Continue?'
      k = get_kbrd(1)
      print, ''
+     !P.MULTI = 0
   endif
-  !P.MULTI = 0
+
+;  stop
   
   ;;  WRITE OUTPUT
-  savedata = {LAMBDA:      lambda, $
-              Z:           z, $
-              Z_PHOT:      z_phot, $
-              RA:          sxpar(thead, 'RA'), $
-              DEC:         sxpar(thead, 'DEC'), $
-              MAG:         mag, $
-              F_TOT:       integ, $
-              F_INNER:     inner, $
-              F_INTER:     inter, $
-              F_OUTER:     outer, $
-              VAR_TOT:     ivar, $
-              VAR_INNER:   innvar, $
-              VAR_INTER:   intvar, $
-              VAR_OUTER:   ovar, $
-              NPIX_TOT:    nAlls, $
-              NPIX_INNER:  nInns, $
-              NPIX_INTER:  nInts, $
-              NPIX_OUTER:  nOuts, $
-              SENSITIVITY: sens, $
-              EXPTIME:     exptime, $
-              FILENAME:    infile, $
-              MODEL_TRACE: modim, $
-              EXTRACT_ZONES: extrIM, $
+  savedata = {LAMBDA:         lambda, $
+              Z:              z, $
+              Z_PHOT:         z_phot, $
+              RA:             sxpar(thead, 'RA'), $
+              DEC:            sxpar(thead, 'DEC'), $
+              MAG:            mag, $
+              F_TOT:          integ, $
+              F_OPTI_TOT:     opti, $
+              F_INNER:        inner, $
+              F_INTER:        inter, $
+              F_OUTER:        outer, $
+              F_OPTI_OUTER:   optiOut, $
+              VAR_TOT:        ivar, $
+              VAR_OPTI_TOT:   opti_var, $
+              VAR_INNER:      innvar, $
+              VAR_INTER:      intvar, $
+              VAR_OUTER:      ovar, $
+              VAR_OPTI_OUTER: optiOutVar, $
+              NPIX_TOT:       nAlls, $
+              NPIX_INNER:     nInns, $
+              NPIX_INTER:     nInts, $
+              NPIX_OUTER:     nOuts, $
+              SENSITIVITY:    sens, $
+              EXPTIME:        exptime, $
+              FILENAME:       infile, $
+              MODEL_TRACE:    modim, $
+              EXTRACT_ZONES:  extrIM, $
 ;              EXTRACT_MIDPTS: , $
-              LSF: prof.LSF, $
-              RE: prof.RE, $
-              SPEC2D: sci, $
-              DIRECT_IM: di, $
-              TRACE: trace, $
-              INNERUP: innerup, $
-              INNERDN: innerdn, $
-              INTERUP: interup, $
-              INTERDN: interdn, $
-              OUTERUP: outerup, $
-              OUTERDN: outerdn, $
-              PA: pa};, $
-;              MASK: mask}
+              LSF:            prof.LSF, $
+              RE:             prof.RE, $
+              SPEC2D:         sci, $
+              DIRECT_IM:      di, $
+              TRACE:          trace, $
+              INNERUP:        innerup, $
+              INNERDN:        innerdn, $
+              INTERUP:        interup, $
+              INTERDN:        interdn, $
+              OUTERUP:        outerup, $
+              OUTERDN:        outerdn, $
+              OPTI_OUTERUP:   optiWideUp, $
+              OPTI_OUTERDN:   optiWideDn, $
+              PA:             pa, $
+              MASK:           mask}
 ;  mwrfits, savedata, pa+'_extractions/'+string(ii, f = '(I04)')+'_radStuff.fits', /create
   
   RETURN, savedata
