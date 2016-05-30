@@ -143,15 +143,15 @@ function extract_1, infile, z, $
      sky = mean([sci[jj,0:10], sci[jj,-11:*]])
 
      skies[jj]  = sky
-     integ[jj]  = total(sci[jj,all]); / nall
-     outer[jj]  = total(sci[jj,out]); / nout
-     inter[jj]  = total(sci[jj,int]); / nint
-     inner[jj]  = total(sci[jj,in ]); / nin 
+     integ[jj]  = total(sci[jj,all]) / nall
+     outer[jj]  = total(sci[jj,out]) / nout
+     inter[jj]  = total(sci[jj,int]) / nint
+     inner[jj]  = total(sci[jj,in ]) / nin 
      
-     ivar[jj]   = total(var[jj,all]); / nall
-     ovar[jj]   = total(var[jj,out]); / nout
-     intvar[jj] = total(var[jj,int]); / nint
-     innvar[jj] = total(var[jj,in ]); / nin 
+     ivar[jj]   = total(var[jj,all]) / nall^2
+     ovar[jj]   = total(var[jj,out]) / nout^2
+     intvar[jj] = total(var[jj,int]) / nint^2
+     innvar[jj] = total(var[jj,in ]) / nin^2
 
      nAlls[jj] = nall
      nInns[jj] = nin
