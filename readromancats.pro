@@ -32,7 +32,7 @@ pro readRomanCats, photometryCat, redshiftCat, $
            f = 'L,'+$
            'F,F,'+$
            'F,F,'+$
-           'F', comment = '#', /fast
+           'F', comment = '#', /quick
 
   ;; Check that they have the same number of objects.
   ;; If so, dump to output.
@@ -45,7 +45,7 @@ pro readRomanCats, photometryCat, redshiftCat, $
      print, ' >>> Catalogs look aligned; dumping to output ... '
 
      savedata = {$
-                ID:               0L , $
+                ID_ROME:          0L , $
                 RA:               0.d, $
                 DEC:              0.d, $
                 ZBEST_ROME:       0. , $
@@ -76,33 +76,33 @@ pro readRomanCats, photometryCat, redshiftCat, $
      
      savedata = replicate(savedata, ngals)
      for ii = 0, ngals - 1 do begin
-        savedata[ii].ID               = ID[ii]
+        savedata[ii].ID_ROME          = ID[ii]
         savedata[ii].RA               = RA[ii]              
         savedata[ii].DEC              = DEC[ii]                           
-        savedata[ii].ZBEST_ROME       = ZBEST_ROME[ii]             
-        savedata[ii].ZSPEC_FLAG_ROME  = ZSPEC_FLAG_ROME[ii]   
-        savedata[ii].ZSPEC_ID_ROME    = ZSPEC_ID_ROME[ii]       
-        savedata[ii].PHOTOZ_FLAG_ROME = PHOTOZ_FLAG_ROME[ii] 
-        savedata[ii].B435R            = B435R[ii]                       
-        savedata[ii].V606R            = V606R[ii]                       
-        savedata[ii].I814R            = I814R[ii]                       
-        savedata[ii].Y105R            = Y105R[ii]                       
-        savedata[ii].J125R            = J125R[ii]                       
-        savedata[ii].JH140R           = JH140R[ii]                     
-        savedata[ii].H160R            = H160R[ii]                       
-        savedata[ii].KsR              = KsR[ii]                           
-        savedata[ii].CH1R             = CH1R[ii]                         
-        savedata[ii].CH2R             = CH2R[ii]                         
-        savedata[ii].errB435R         = errB435R[ii]                 
-        savedata[ii].errV606R         = errV606R[ii]                 
-        savedata[ii].errI814R         = errI814R[ii]                 
-        savedata[ii].errY105R         = errY105R[ii]                 
-        savedata[ii].errJ125R         = errJ125R[ii]                 
-        savedata[ii].errJH140R        = errJH140R[ii]               
-        savedata[ii].errH160R         = errH160R[ii]                 
-        savedata[ii].errKsR           = errKsR[ii]                     
-        savedata[ii].errCH1R          = errCH1R[ii]                   
-        savedata[ii].errCH2R          = errCH2R[ii]         
+        savedata[ii].ZBEST_ROME       = ZBEST[ii]             
+        savedata[ii].ZSPEC_FLAG_ROME  = ZSPEC_FLAG[ii]   
+        savedata[ii].ZSPEC_ID_ROME    = ZSPEC_ID[ii]       
+        savedata[ii].PHOTOZ_FLAG_ROME = PHOTOZ_FLAG[ii] 
+        savedata[ii].B435R            = B435[ii]                       
+        savedata[ii].V606R            = V606[ii]                       
+        savedata[ii].I814R            = I814[ii]                       
+        savedata[ii].Y105R            = Y105[ii]                       
+        savedata[ii].J125R            = J125[ii]                       
+        savedata[ii].JH140R           = JH140[ii]                     
+        savedata[ii].H160R            = H160[ii]                       
+        savedata[ii].KsR              = Ks[ii]                           
+        savedata[ii].CH1R             = CH1[ii]                         
+        savedata[ii].CH2R             = CH2[ii]                         
+        savedata[ii].errB435R         = errB435[ii]                 
+        savedata[ii].errV606R         = errV606[ii]                 
+        savedata[ii].errI814R         = errI814[ii]                 
+        savedata[ii].errY105R         = errY105[ii]                 
+        savedata[ii].errJ125R         = errJ125[ii]                 
+        savedata[ii].errJH140R        = errJH140[ii]               
+        savedata[ii].errH160R         = errH160[ii]                 
+        savedata[ii].errKsR           = errKs[ii]                     
+        savedata[ii].errCH1R          = errCH1[ii]                   
+        savedata[ii].errCH2R          = errCH2[ii]         
      endfor
      
      mwrfits, savedata, outfits, /create
@@ -110,5 +110,14 @@ pro readRomanCats, photometryCat, redshiftCat, $
      print, ' >>> Catalog output to : '+outfits
 
   endelse
+
+end
+
+pro doa744
+
+readromancats, $
+   '/home/labramson/LocalData/Abramson/GLASS/ROMAN_CATALOGS/A2744/A2744_CLUSTER.cat', $
+   '/home/labramson/LocalData/Abramson/GLASS/ROMAN_CATALOGS/A2744/A2744_PHOTOZ_FULLSAMPLE.cat', $
+   OUTFITS = '$DATA_DIR/GLASS_official_products/ABEL2744/Catalogs/ROMAN_PHOTOZ.fits'
 
 end
