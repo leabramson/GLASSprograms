@@ -332,20 +332,20 @@ pro make_taka_fast_fits, infile, outname
   ngals = n_elements(ID)
   
   savedata = {ID_TM:             0L, $
-              TM_F435W:          0., $
-              TM_E435W:          0., $
-              TM_F606W:          0., $
-              TM_E606W:          0., $
-              TM_F814W:          0., $
-              TM_E814W:          0., $
-              TM_F105W:          0., $
-              TM_E105W:          0., $
-              TM_F125W:          0., $
-              TM_E125W:          0., $
-              TM_F140W:          0., $
-              TM_E140W:          0., $
-              TM_F160W:          0., $
-              TM_E160W:          0., $
+              TM_F435:           0., $
+              TM_E435:           0., $
+              TM_F606:           0., $
+              TM_E606:           0., $
+              TM_F814:           0., $
+              TM_E814:           0., $
+              TM_F105:           0., $
+              TM_E105:           0., $
+              TM_F125:           0., $
+              TM_E125:           0., $
+              TM_F140:           0., $
+              TM_E140:           0., $
+              TM_F160:           0., $
+              TM_E160:           0., $
               TM_Z_USED:         0., $
               TM_FAST_LTAU:      0., $
               TM_FAST_LTAU_L68:  0., $
@@ -374,7 +374,21 @@ pro make_taka_fast_fits, infile, outname
   for ii = 0, ngals - 1 do begin
 
      savedata[ii].ID_TM             = id[ii]                    
-     savedata[ii].TM_FAST_Z         = z[ii]                 
+     savedata[ii].TM_F435           = F435[ii]
+     savedata[ii].TM_E435           = E435[ii]
+     savedata[ii].TM_F606           = F606[ii]
+     savedata[ii].TM_E606           = E606[ii]
+     savedata[ii].TM_F814           = F814[ii]   
+     savedata[ii].TM_E814           = E814[ii]
+     savedata[ii].TM_F105           = F105[ii]
+     savedata[ii].TM_E105           = E105[ii]
+     savedata[ii].TM_F125           = F125[ii]
+     savedata[ii].TM_E125           = E125[ii]
+     savedata[ii].TM_F140           = F140[ii]
+     savedata[ii].TM_E140           = E140[ii]
+     savedata[ii].TM_F160           = F160[ii]
+     savedata[ii].TM_E160           = E160[ii]
+     savedata[ii].TM_Z_USED         = z[ii]                 
      savedata[ii].TM_FAST_LTAU      = ltau[ii]        
      savedata[ii].TM_FAST_LTAU_L68  = l68_ltau[ii]    
      savedata[ii].TM_FAST_LTAU_U68  = u68_ltau[ii]   
