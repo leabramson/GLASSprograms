@@ -16,7 +16,9 @@ pro makemaster, FIELD = field, $
   readredshift , catDir+'/*redshiftcatalog.txt', redshifts
   readgig      , catDir+'/*glassgigcatalog.txt', gigCat
 
-  photozs   = catDir+'/*_photoz.fits'
+  spawn, 'ls '+catDir+'/*_phot*z*.fits > tmp.list'
+  readcol, 'tmp.list', photozs, f = 'A'
+  photozs   = photozs[0]
   translatekuang, photozs, photozOut
 
   print, ''
@@ -44,6 +46,7 @@ end
 
 pro doMost
 
+  makemaster, field = 'ABEL0370', pointing = 'ABEL0370_CTR', outdir = '../MasterCats_V1'
   makemaster, field = 'ABEL2744', pointing = 'ABEL2744_CTR', outdir = '~/Desktop/MasterCats_V1'
 ;  makemaster, field = 'MACS0416', pointing = 'MACS0416_CTR', outdir =
 ;  '~/Desktop/MasterCats_V1' ;; MISSING GIG RESULTS
@@ -52,6 +55,7 @@ pro doMost
   makemaster, field = 'MACS1423', pointing = 'MACS1423_CTR', outdir = '~/Desktop/MasterCats_V1'
   makemaster, field = 'MACS2129', pointing = 'MACS2129_CTR', outdir = '~/Desktop/MasterCats_V1'
   makemaster, field = 'RXJC1347', pointing = 'RXJC1347_CTR', outdir = '~/Desktop/MasterCats_V1'
+  makemaster, field = 'RXJC2248', pointing = 'RXJC2248_CTR', outdir = '../MasterCats_V1'
   
 end
 

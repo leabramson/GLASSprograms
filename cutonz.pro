@@ -14,7 +14,7 @@ function doContam, infits, $
                   (    infits.CONTAM_G102_PA2 le clevel    $
                    AND infits.CONTAM_G141_PA2 le clevel    $
                    AND infits.DEFECT_G102_PA2 eq 0         $
-                   AND infits.DEFECT_G141_PA2 eq 0), nuse) $ ;; Take is as long as 1 good PA
+                   AND infits.DEFECT_G141_PA2 eq 0), nuse) $ ;; Take it as long as 1 good PA
   else $
      keep = where((    infits.CONTAM_G102_PA1 le clevel    $
                    AND infits.CONTAM_G141_PA1 le clevel    $

@@ -40,7 +40,7 @@ pro join2cats, masterIn, otherCatIn, output, $
         tmpdata = slave.(ii)
         type    = size(tmpdata, /tname)
         case type of
-           'STRING' : tmpval = 'string(-99)'
+           'STRING' : tmpVal = 'string(-99)'
            'FLOAT'  : tmpVal = '-99.'
            'LONG'   : tmpVal = '-99L'
            'INT'    : tmpVal = '-99'

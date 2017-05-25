@@ -34,7 +34,6 @@ function getoptizone, image, varmap, $
 ;        psym = 1, /ynoz
 ;  oplot, [optiap], [results[optiAp]], $
 ;         psym = 1, col = 255, symsize = 2
-;  stop
   
   RETURN, optiAp
 end

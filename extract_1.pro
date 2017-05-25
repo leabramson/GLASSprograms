@@ -9,7 +9,7 @@ function extract_1, infile, z, $
   if NOT keyword_set(Z_PHOT) then z_phot = -99
   if NOT keyword_SET(PA) then pa = -99
   if NOT keyword_set(DOMASK) then domask = 0 else domask = 1 ;; mask rather than subtract contamination
-  if NOT keyword_set(REFIT) then refit = 0 else refit = 1  ;; refit continuum centerline
+  if NOT keyword_set(REFIT) then refit = 0 else refit = 1    ;; refit continuum centerline
   if NOT keyword_set(INSPECT) then inspect = 0 else inspect = 1
   
   ;; READ CRAP
@@ -50,8 +50,8 @@ function extract_1, infile, z, $
   ;; MAKE A MASK IMAGE
   mask = contam
   mask[where(contam ge 2 * sqrt(var), compl = good)] = 1
-  mask[good] = 0                         ;; Make the mask
-  mask = smooth(mask, [15,5], /edge_wrap, /nan)    ;; Grow the mask
+  mask[good] = 0                                ;; Make the mask
+  mask = smooth(mask, [15,5], /edge_wrap, /nan) ;; Grow the mask
   mask[where(mask ge 1d-4, compl = good)] = 1
   mask[good] = 0
   
@@ -92,16 +92,16 @@ function extract_1, infile, z, $
   extrIm = sci
   
   ;;  DEFINE EXTRACTION RADIAL REGIMES
-  innerup = trace   + 0.25 * re
-  innerdn = trace   - 0.25 * re
-  interup = innerup + 0.50 * re
-  interdn = innerdn - 0.50 * re
-  outerup = interup + 0.75 * re
-  outerdn = interdn - 0.75 * re
+  innerup = ceil ( trace   + 0.25 * re )
+  innerdn = floor( trace   - 0.25 * re )
+  interup = ceil ( innerup + 0.50 * re )
+  interdn = floor( innerdn - 0.50 * re )
+  outerup = ceil ( interup + 0.75 * re )
+  outerdn = floor( interdn - 0.75 * re )
 
   ;; Get an optimally wide "outer aperture"
   optiWide = getoptizone(sci, var, $
-                         clineUp = innerup, $
+                         clineUp = innerUp, $
                          clineDn = innerDn)
   optiWideUp = innerUp + optiWide
   optiWideDn = innerDn - optiWide
@@ -126,20 +126,26 @@ function extract_1, infile, z, $
   nOpti = intarr(run)
   
   ;;  DO THE EXTRACTIONS
-  opti = []
-  opti_Var = []
-  optiMask = []
-  optiMask_Var = []
+  opti         = dblarr(run)
+  opti_Var     = dblarr(run)
+  optiMask     = dblarr(run)
+  optiMask_Var = dblarr(run)
   for jj = 0, run - 1 do begin
 
      ;; Do the optimal extraction
-     opti     = [opti, total(modim[jj,*]*sci[jj,*]/var[jj,*]) $
-                 / total(modim[jj,*]^2/var[jj,*])]
-     opti_var = [opti_var, 1. / total(modim[jj,*]^2/var[jj,*])]
+
+;     if jj eq floor(run/3. * 2) then stop
+     
+     opti[jj]     = total(modim[jj,*] * sci[jj,*] / var[jj,*]) $
+                    / total(modim[jj,*]^2 / var[jj,*])
+
+     opti_var[jj] = total(modim[jj,*]^2 / var[jj,*])^(-1)
+
      goods    = where(~mask[jj,*], ng)
-     optiMask = [optiMask, total(modim[jj,goods]*spec[jj,goods]/var[jj,goods]) $
-                 / total(modim[jj,goods]^2/var[jj,goods])]
-     optiMask_Var = [optiMask_Var, 1. / total(modim[jj,goods]^2/var[jj,goods])]
+     optiMask[jj] = total(modim[jj,goods]*spec[jj,goods]/var[jj,goods]) $
+                    / total(modim[jj,goods]^2/var[jj,goods])
+
+     optiMask_Var[jj] = total(modim[jj,goods]^2/var[jj,goods])^(-1)
 
      ;; Do the binned extractions
      all = where( tx ge outerdn[jj] AND tx le outerup[jj], nall)
@@ -157,29 +163,29 @@ function extract_1, infile, z, $
      
      sky = mean([sci[jj,0:10], sci[jj,-11:*]])
 
-     skies[jj]  = sky
-     integ[jj]  = total(sci[jj,all]) / nall
-     outer[jj]  = total(sci[jj,out]) / nout
-     inter[jj]  = total(sci[jj,int]) / nint
-     inner[jj]  = total(sci[jj,in ]) / nin 
-     optiOut[jj] = total(sci[jj,optiOuter]) / no
+     skies[jj]      = sky
+     integ[jj]      = total(sci[jj,all]) / nall
+     outer[jj]      = total(sci[jj,out]) / nout
+     inter[jj]      = total(sci[jj,int]) / nint
+     inner[jj]      = total(sci[jj,in ]) / nin 
+     optiOut[jj]    = total(sci[jj,optiOuter]) / no
      
-     ivar[jj]   = total(var[jj,all]) / nall^2
-     ovar[jj]   = total(var[jj,out]) / nout^2
-     intvar[jj] = total(var[jj,int]) / nint^2
-     innvar[jj] = total(var[jj,in ]) / nin^2
+     ivar[jj]       = total(var[jj,all]) / nall^2
+     ovar[jj]       = total(var[jj,out]) / nout^2
+     intvar[jj]     = total(var[jj,int]) / nint^2
+     innvar[jj]     = total(var[jj,in ]) / nin^2
      optiOutVar[jj] = total(var[jj,optiOuter]) / no^2
      
-     nAlls[jj] = nall
-     nInns[jj] = nin
-     nInts[jj] = nint
-     nOuts[jj] = nout
-     nOpti[jj] = no
+     nAlls[jj]      = nall
+     nInns[jj]      = nin
+     nInts[jj]      = nint
+     nOuts[jj]      = nout
+     nOpti[jj]      = no
 
      extrIm[jj,optiOuter] = 5
-     extrIm[jj,out] = 10
-     extrIm[jj,int] = 20
-     extrIm[jj,in ] = 30
+     extrIm[jj,out]       = 10
+     extrIm[jj,int]       = 20
+     extrIm[jj,in ]       = 40
      
   endfor       
 
@@ -211,13 +217,13 @@ function extract_1, infile, z, $
               DEC:            sxpar(thead, 'DEC'), $
               MAG:            mag, $
               F_TOT:          integ, $
-              F_OPTI_TOT:     opti, $
+              F_OPTI:         opti, $
               F_INNER:        inner, $
               F_INTER:        inter, $
               F_OUTER:        outer, $
               F_OPTI_OUTER:   optiOut, $
               VAR_TOT:        ivar, $
-              VAR_OPTI_TOT:   opti_var, $
+              VAR_OPTI:       opti_var, $
               VAR_INNER:      innvar, $
               VAR_INTER:      intvar, $
               VAR_OUTER:      ovar, $
@@ -226,6 +232,7 @@ function extract_1, infile, z, $
               NPIX_INNER:     nInns, $
               NPIX_INTER:     nInts, $
               NPIX_OUTER:     nOuts, $
+              NPIX_OPTI_OUTER:nOpti, $
               SENSITIVITY:    sens, $
               EXPTIME:        exptime, $
               FILENAME:       infile, $
@@ -234,6 +241,7 @@ function extract_1, infile, z, $
 ;              EXTRACT_MIDPTS: , $
               LSF:            prof.LSF, $
               RE:             prof.RE, $
+              SPEC_ORIG:      spec, $
               SPEC2D:         sci, $
               DIRECT_IM:      di, $
               TRACE:          trace, $
